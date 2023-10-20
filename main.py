@@ -20,15 +20,22 @@ def listar_processos():
         username = proc['username']
         process_list.insert("", "end", values=(pid, name, status, cpu_percent, num_threads, username))
 
-    app.after(1000, listar_processos)  # Atualiza a cada 5 segundos (5000 milissegundos)
+    app.after(5000, listar_processos)  # Atualiza a cada 5 segundos (5000 milissegundos)
 
 def matar_processo():
-    pass
+    selected_item = process_list.selection()
+    if selected_item:
+        pid = process_list.item(selected_item)['values'][0]
+        try:
+            process = psutil.Process(pid)
+            process.terminate()
+        except psutil.NoSuchProcess:
+            pass
 
 def parar_continuar_processo(acao):
     pass
 
-def ordenar_por_cpu(event):
+def ordenar_por_cpu():
     # Quando o cabeçalho da coluna "CPU%" for clicado, ordene a lista por uso de CPU
     listar_processos()
 
