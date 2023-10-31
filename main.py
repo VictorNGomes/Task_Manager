@@ -5,13 +5,12 @@ import psutil
 def listar_processos():
     process_list.delete(*process_list.get_children())
     processes = []
-    filtro = nome_filtro.get().lower()  # Obtém o valor do filtro em letras minúsculas
+    filtro = nome_filtro.get().lower()
     for proc in psutil.process_iter(attrs=['pid', 'name', 'status', 'cpu_percent', 'num_threads', 'username', 'nice']):
         process_info = proc.info
-        if filtro in process_info['name'].lower():  # Verifica se o filtro está contido no nome do processo
+        if filtro in process_info['name'].lower():
             processes.append(process_info)
 
-    # Ordene a lista de processos com base no uso de CPU (cpu_percent)
     processes.sort(key=lambda x: x['cpu_percent'], reverse=True)
 
     for proc in processes:
@@ -24,7 +23,7 @@ def listar_processos():
         nice = proc['nice']
         process_list.insert("", "end", values=(pid, name, status, cpu_percent, num_threads, username, nice))
 
-    app.after(5000, listar_processos)  # Atualiza a cada 5 segundos (5000 milissegundos)
+    app.after(5000, listar_processos)
 
 def matar_processo():
     selected_item = process_list.selection()
@@ -51,15 +50,24 @@ def parar_continuar_processo(acao):
 
 def alterar_prioridade():
     pid = pid_entry.get()
-    nice = int(prioridade_var.get())  # Obtém o valor da prioridade do menu suspenso
+    nice = int(prioridade_var.get())
     try:
         process = psutil.Process(int(pid))
         process.nice(nice)
     except (psutil.NoSuchProcess, ValueError):
         pass
 
+def definir_afinidade():
+    pid = pid_entry.get()
+    cpu = cpu_entry.get()
+    try:
+        process = psutil.Process(int(pid))
+        process.cpu_affinity([int(cpu)])
+    except (psutil.NoSuchProcess, ValueError):
+        pass
+
 def ordenar_por_cpu():
-    listar_processos()  # Atualize a lista ao clicar na coluna "CPU%"
+    listar_processos()
 
 app = tk.Tk()
 app.title("Gerenciador de Tarefas")
@@ -78,7 +86,7 @@ process_list.pack()
 
 filtro_frame = ttk.Frame(app)
 filtro_frame.pack(padx=10, pady=10)
-nome_filtro = tk.StringVar()  # Variável para armazenar o texto do filtro
+nome_filtro = tk.StringVar()
 filtro_label = ttk.Label(filtro_frame, text="Filtrar por nome:")
 filtro_label.pack(side=tk.LEFT)
 filtro_entry = ttk.Entry(filtro_frame, textvariable=nome_filtro, width=30)
@@ -99,11 +107,19 @@ prioridade_label = ttk.Label(prioridade_frame, text="Nova Prioridade:")
 prioridade_label.pack(side=tk.LEFT)
 prioridade_var = tk.StringVar()
 prioridade_combobox = ttk.Combobox(prioridade_frame, textvariable=prioridade_var, values=["-20", "-10", "0", "10", "20"])
-prioridade_combobox.set("0")  # Defina o valor padrão
+prioridade_combobox.set("0")
 prioridade_combobox.pack(side=tk.LEFT)
-
 prioridade_button = ttk.Button(prioridade_frame, text="Alterar Prioridade", command=alterar_prioridade)
 prioridade_button.pack(side=tk.LEFT)
+
+afinidade_frame = ttk.Frame(app)
+afinidade_frame.pack(padx=10, pady=10)
+cpu_label = ttk.Label(afinidade_frame, text="Definir Afinidade da CPU:")
+cpu_label.pack(side=tk.LEFT)
+cpu_entry = ttk.Entry(afinidade_frame, width=2)
+cpu_entry.pack(side=tk.LEFT)
+afinidade_button = ttk.Button(afinidade_frame, text="Definir Afinidade da CPU", command=definir_afinidade)
+afinidade_button.pack(side=tk.LEFT)
 
 button_frame = tk.Frame(app)
 button_frame.pack(pady=10)
@@ -116,5 +132,5 @@ parar_button.pack(side=tk.LEFT)
 continuar_button = tk.Button(button_frame, text="Continuar Processo", command=lambda: parar_continuar_processo('continuar'))
 continuar_button.pack(side=tk.LEFT)
 
-listar_processos()  # Inicialmente, liste os processos
+listar_processos()
 app.mainloop()
